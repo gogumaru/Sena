@@ -18,18 +18,13 @@ struct ProductDetailView: View {
     @State private var detailCoordinator = WebViewCoordinator()
 
     var body: some View {
-        Group {
-            if let url = URL(string: product.url) {
-                ShopeeWebView(url: url, coordinator: detailCoordinator)
-            } else {
-                ContentUnavailableView(
-                    "URL produk tidak valid",
-                    systemImage: "link.badge.plus"
-                )
+        ShopeeWebView(coordinator: detailCoordinator)
+            .navigationTitle(product.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .task {
+                guard let url = URL(string: product.url) else { return }
+                try? await detailCoordinator.navigate(to: url)
             }
-        }
-        .navigationTitle(product.title)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

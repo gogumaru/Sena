@@ -17,9 +17,12 @@ struct ShopeeLoginSheet: View {
     
     var body: some View {
         NavigationStack {
-            ShopeeWebView(url: Self.entryURL, coordinator: viewModel.loginCoordinator)
+            ShopeeWebView(coordinator: viewModel.loginCoordinator)
                 .navigationTitle("Login Shopee")
                 .navigationBarTitleDisplayMode(.inline)
+                .task {
+                    try? await viewModel.loginCoordinator.navigate(to: Self.entryURL)
+                }
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Batal") { dismiss() }

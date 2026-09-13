@@ -18,6 +18,64 @@ enum ShopeeExtractor {
     
     static let homeURL = URL(string: "https://shopee.co.id")!
     
+
+
+    static let cartURL = URL(string: "https://shopee.co.id/cart")!
+    
+    static let clickCartIconScript = """
+    var cartLink = document.querySelector('.navbar-icon-cart__wrapper');
+    if (!cartLink) { return 'not-found'; }
+    cartLink.click();
+    return 'clicked';
+    """
+
+
+    static let cartItemsScript = """
+    function titleFromImageAlt(alt) {
+        if (!alt) { return null; }
+        var prefix = 'Picture for ';
+        return alt.indexOf(prefix) === 0 ? alt.slice(prefix.length).trim() : alt.trim();
+    }
+
+    function textOrNull(el) {
+        if (!el) { return null; }
+        var text = el.textContent;
+        return text ? text.trim() : null;
+    }
+
+    function attrOrNull(el, attr) {
+        if (!el) { return null; }
+        return el.getAttribute(attr);
+    }
+
+    var cards = document.querySelectorAll('a[href*="-i."]');
+    var items = [];
+
+    cards.forEach(function (card) {
+        var imgEl = card.querySelector('picture img');
+        var priceEl = card.querySelector('.dNCL04');
+        var variantEl = card.querySelector('.l6P6Ns');
+        var quantityEl = card.querySelector('input[inputmode="numeric"]');
+
+        var href = attrOrNull(card, 'href');
+        var title = titleFromImageAlt(attrOrNull(imgEl, 'alt'));
+
+        if (!title || !href) { return; }
+
+        items.push({
+            id: href,
+            title: title,
+            variant: textOrNull(variantEl),
+            rawPrice: textOrNull(priceEl),
+            rawQuantity: quantityEl ? quantityEl.value : null,
+            url: href.indexOf('http') === 0 ? href : ('https://shopee.co.id' + href),
+            imageURL: attrOrNull(imgEl, 'src')
+        });
+    });
+
+    return JSON.stringify(items);
+    """
+    
     static func triggerSearchScript(keyword: String) -> String {
         let encoded = (try? JSONEncoder().encode(keyword)).flatMap { String(data: $0, encoding: .utf8) } ?? "\"\""
         return """
@@ -73,8 +131,8 @@ enum ShopeeExtractor {
 
     cards.forEach(function (card) {
         var linkEl = card.querySelector('a');
-        var priceEl = card.querySelector('.text-shopee-primary');
-        var ratingEl = card.querySelector('img[alt="rating-star"] + span');
+        var priceEl = card.querySelector('.truncate.flex.items-baseline');
+        var ratingEl = card.querySelector('img[alt="rating-star"]  span');
         var soldCountEl = card.querySelector('.text-shopee-black87.text-sp10');
         var imageEl = card.querySelector('img[elementtiming="shopee:heroComponentPaint"]');
 

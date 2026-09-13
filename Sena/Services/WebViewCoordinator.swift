@@ -48,12 +48,15 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate {
         self.webView = webView
     }
 
-    /// Suspends until the current page finishes loading (or fails).
-    /// If the page has already finished loading by the time this is
-    /// called (a fast or cached load can beat this call), it returns
-    /// immediately instead of waiting for a navigation event that
-    /// already happened. This is the trickiest part of the WKWebView
-    /// async bridge, watch for it while testing.
+    func navigate(to url: URL) async throws {
+        guard let webView else {
+            throw CoordinatorError.webViewNotAttached
+        }
+        isCurrentlyLoaded = false
+        webView.load(URLRequest(url: url))
+        try await waitForPageLoad()
+    }
+    
     func waitForPageLoad() async throws {
         if isCurrentlyLoaded {
             return
